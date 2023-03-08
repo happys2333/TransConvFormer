@@ -134,7 +134,7 @@ class Ourformer(nn.Module):
         # self.end_conv1 = nn.Conv1d(in_channels=label_len+out_len, out_channels=out_len, kernel_size=1, bias=True)
         # self.end_conv2 = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=1, bias=True)
         self.projection = nn.Linear(d_model, c_out, bias=True)
-        self.transConv = TransData(min(seq_len,label_len+out_len), device, max_step)
+        self.transConv = TransData(max(seq_len,label_len+out_len), device, max_step)
 
     def alignment(self, x):
         """
@@ -157,12 +157,12 @@ class Ourformer(nn.Module):
                 enc_self_mask=None, dec_self_mask=None, dec_enc_mask=None):
         # encoding embedding
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
-        enc_down_sampled, padding_len = self.alignment(enc_out)
+        enc_down_sampled, padding_len_enc = self.alignment(enc_out)
         attns = None
 
         # decoding embedding
         dec_out = self.dec_embedding(x_dec, x_mark_dec)
-        dec_down_sampled, _ = self.alignment(dec_out)
+        dec_down_sampled, padding_len_dec = self.alignment(dec_out)
         dec_outs = []
 
         # down sampling step
@@ -184,11 +184,11 @@ class Ourformer(nn.Module):
             dec_up_sampled = self.upSamples[i](dec_outs[i])
             dec_outs[i - 1] += dec_up_sampled
 
-        dec_out = dec_outs[0][:, :(-padding_len if padding_len > 0 else None), :]  # get rid of the padding part
+        dec_out = dec_outs[0][:, :(-padding_len_dec if padding_len_dec > 0 else None), :]  # get rid of the padding part
         dec_out = self.finalNorm(dec_out)
         dec_out = self.projection(dec_out)
         dec_out = self.transConv(dec_out)
-        dec_out += x_enc[:,-dec_out.shape[1]:,:]
+        dec_out += x_dec
         # dec_out = self.end_conv1(dec_out)
         # dec_out = self.end_conv2(dec_out.transpose(2,1)).transpose(1,2)
         if self.output_attention:

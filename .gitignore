@@ -135,3 +135,7 @@ dmypy.json
 # don't upload dataset
 dataset
 output
+
+# 排除数据集
+
+dataset/**
