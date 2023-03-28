@@ -105,7 +105,7 @@ class TimeFeatureEmbedding(nn.Module):
 class ConvEmbedding(nn.Module):
     def __init__(self, seq_len, device, max_step):
         super(ConvEmbedding, self).__init__()
-        self.cov_array = []
+        self.cov_array = nn.ModuleList()
         self.seq_len = seq_len
         self.max_step = max_step
         remain = seq_len

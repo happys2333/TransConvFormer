@@ -208,5 +208,5 @@ if __name__ == '__main__':
     model = Ourformer(device=device, enc_in=enc_in, dec_in=dec_in, c_out=c_out, seq_len=seq_len,
                       label_len=label_len, out_len=out_len).to(device)
 
-    summary(model, [(32, seq_len, enc_in), (32, seq_len, enc_in), (32, seq_len, enc_in), (32, seq_len, enc_in)],
+    summary(model, [(32, seq_len, enc_in), (32, seq_len, enc_in), (32, out_len+label_len, enc_in), (32, out_len+label_len, enc_in)],
             device=device)
