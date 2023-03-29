@@ -11,6 +11,7 @@ import os
 import time
 import numpy as np
 from datetime import datetime
+from util.param import data_parser
 
 DEVICE = torch.device('cuda:0')
 
@@ -18,7 +19,7 @@ DEVICE = torch.device('cuda:0')
 
 def get_data(flag='train', dataset='ETTh1'):
     process = Process_Dataset(dataset=dataset, seq_len=SEQ_LEN,
-                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES, target='OT', cols=None, freq='h',
+                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES, target=data_parser[dataset]['T'], cols=None, freq='h',
                               timeenc=0, inverse=False, batch_size=BATCH_SIZE,)
     return process.get_data(flag)
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 import model.informer.informer as informer
 from torch import optim
 from util.param import LEARN, BATCH_SIZE, PATIENCE, EPOCH, SEQ_LEN, LABEL_LEN, PRED_LEN, ENCODER_IN, DECODER_IN, \
-     OUT_SIZE, OUTPUT_MODEL_PATH,FEATURES,DATASET
+     OUT_SIZE, OUTPUT_MODEL_PATH,FEATURES,DATASET,data_parser
 from data_process.dataset_process import Process_Dataset
 from torch.utils.data import DataLoader
 from util.metrics import metric
@@ -19,7 +19,7 @@ LOG_FILE = None
 
 def get_data(flag='train', dataset='ETTh1'):
     process = Process_Dataset(dataset=dataset, seq_len=SEQ_LEN,
-                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES, target='OT', cols=None, freq='h',
+                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES, target=data_parser[dataset]['T'], cols=None, freq='h',
                               timeenc=0, inverse=False, batch_size=BATCH_SIZE,)
     return process.get_data(flag)
 

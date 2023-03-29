@@ -189,7 +189,7 @@ class Dataset_ETT_minute(Dataset):
 
 class Dataset_Custom(Dataset):
     def __init__(self, flag='train', size=None,
-                 features='S', data_path=ETT_PATH_DIR + 'ETTh1.csv',
+                 features='S', data_path='ETTh1.csv',
                  target='OT', scale=True, inverse=False, timeenc=0, freq='h', cols=None):
         # size [seq_len, label_len, pred_len]
         # info
@@ -218,8 +218,7 @@ class Dataset_Custom(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.data_path,
-                                          self.data_path))
+        df_raw = pd.read_csv(self.data_path)
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''

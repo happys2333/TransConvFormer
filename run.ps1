@@ -6,7 +6,7 @@ $label_len = 48
 $pred_lens = @(96, 192, 336, 720)
 $features = @('M', 'S')
 $python_scripts = @('pred_informer.py', 'pred_ours.py')
-$data_sets = @('ETTh1','ETTh2','ETTm1','ETTm2','WTH','ECL')
+$data_sets = @('WTH','ECL')
 
 cd F:\TransConvFormer
 conda activate $env_name
