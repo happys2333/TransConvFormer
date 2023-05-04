@@ -1,5 +1,13 @@
 #!/bin/bash
 
+#SBATCH -o job.%j.out
+#SBATCH --partition=gpulab02
+#SBATCH -J pytorch_transConv
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=6
+#SBATCH --gres=gpu:1
+#SBATCH --qos=gpulab02
+
 # Define variables
 env_name="DL-Project-2022"
 seq_len=96
