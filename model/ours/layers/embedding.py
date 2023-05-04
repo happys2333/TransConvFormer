@@ -147,13 +147,13 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.conv_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
-        self.mark_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
+        # self.conv_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
+        # self.mark_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
 
     def forward(self, x, x_mark):
-        x = self.conv_emb(x)
+        # x = self.conv_emb(x)
         x_temporal = self.temporal_embedding(x_mark)
-        x_temporal = self.mark_emb(x_temporal)
+        # x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
         return self.dropout(x)
 

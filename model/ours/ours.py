@@ -134,7 +134,7 @@ class Ourformer(nn.Module):
         # self.end_conv1 = nn.Conv1d(in_channels=label_len+out_len, out_channels=out_len, kernel_size=1, bias=True)
         # self.end_conv2 = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=1, bias=True)
         self.projection = nn.Linear(d_model, c_out, bias=True)
-        self.transConv = TransData(max(seq_len,label_len+out_len), device, max_step)
+        # self.transConv = TransData(max(seq_len,label_len+out_len), device, max_step)
 
     def alignment(self, x):
         """
@@ -187,7 +187,7 @@ class Ourformer(nn.Module):
         dec_out = dec_outs[0][:, :(-padding_len_dec if padding_len_dec > 0 else None), :]  # get rid of the padding part
         dec_out = self.finalNorm(dec_out)
         dec_out = self.projection(dec_out)
-        dec_out = self.transConv(dec_out)
+        # dec_out = self.transConv(dec_out)
         dec_out += x_dec
         # dec_out = self.end_conv1(dec_out)
         # dec_out = self.end_conv2(dec_out.transpose(2,1)).transpose(1,2)

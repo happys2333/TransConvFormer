@@ -134,9 +134,9 @@ class AttentionLayer(nn.Module):
         d_values = d_values or (d_model // n_heads)
 
         self.inner_attention = attention
-        self.query_projection = nn.Linear(d_model, d_keys * n_heads)
-        self.key_projection = nn.Linear(d_model, d_keys * n_heads)
-        self.value_projection = nn.Linear(d_model, d_values * n_heads)
+        self.query_residual = Residual(d_model,d_keys * n_heads)
+        self.key_residual = Residual(d_model, d_keys * n_heads)
+        self.value_residual = Residual(d_model, d_values * n_heads)
         self.out_projection = nn.Linear(d_values * n_heads, d_model)
         self.n_heads = n_heads
         self.mix = mix
@@ -146,9 +146,9 @@ class AttentionLayer(nn.Module):
         _, S, _ = keys.shape
         H = self.n_heads
 
-        queries = self.query_projection(queries).view(B, L, H, -1)
-        keys = self.key_projection(keys).view(B, S, H, -1)
-        values = self.value_projection(values).view(B, S, H, -1)
+        queries = self.query_residual(queries).view(B, L, H, -1)
+        keys = self.key_residual(keys).view(B, S, H, -1)
+        values = self.value_residual(values).view(B, S, H, -1)
 
         out, attn = self.inner_attention(
             queries,
@@ -161,3 +161,18 @@ class AttentionLayer(nn.Module):
         out = out.view(B, L, -1)
 
         return self.out_projection(out), attn
+
+
+class Residual(nn.Module):
+    def __init__(self,input_dim, output_dim, dropout_rate=0.1):
+        super(Residual, self).__init__()
+        self.fc = nn.Linear(input_dim, output_dim)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(dropout_rate)
+        self.layer_norm = nn.LayerNorm(output_dim)
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = self.dropout(self.relu(x))
+        x = self.layer_norm(x)
+        return x
