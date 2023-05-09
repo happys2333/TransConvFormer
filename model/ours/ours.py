@@ -4,7 +4,7 @@ from torchinfo import summary
 import math
 import numpy as np
 import torch.nn.functional as F
-from model.ours.layers.embedding import DataEmbedding, TransData
+from model.ours.layers.embedding import DataEmbedding, OutputEmbedding
 from model.ours.layers.encoder import Encoder, EncoderLayer, ConvLayer
 from model.ours.layers.decoder import Decoder, DecoderLayer
 from model.ours.layers.attention import ProbAttention, FullAttention, AttentionLayer

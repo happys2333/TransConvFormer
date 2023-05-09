@@ -14,9 +14,11 @@ def path_parse(target_path):
 EPOCH = 200
 
 LEARN = 0.0001
-BATCH_SIZE = 16
+BATCH_SIZE = 32
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--seq_len', type=int, default=96, help='sequence length')
+parser.add_argument('--enc_layers', type=int, default=1, help='encoder layers number')
 parser.add_argument('--label_len', type=int, default=48, help='label length')
 parser.add_argument('--pred_len', type=int, default=120, help='prediction length')
 parser.add_argument('--features', type=str, default='M', help='features')
@@ -26,6 +28,7 @@ args = parser.parse_args()
 SEQ_LEN = args.seq_len
 LABEL_LEN = args.label_len
 PRED_LEN = args.pred_len
+ENC_LAYER = args.enc_layers
 DATASET = args.dataset
 
 FEATURES = args.features

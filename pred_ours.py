@@ -3,7 +3,7 @@ import torch.nn as nn
 import model.ours.ours as our
 from torch import optim
 from util.param import LEARN, BATCH_SIZE, PATIENCE, EPOCH, SEQ_LEN, LABEL_LEN, PRED_LEN, ENCODER_IN, DECODER_IN, \
-    OUT_SIZE, OUTPUT_MODEL_PATH, FEATURES, DATASET, data_parser
+    OUT_SIZE, OUTPUT_MODEL_PATH, FEATURES, DATASET, data_parser, ENC_LAYER
 from data_process.dataset_process import Process_Dataset
 from torch.utils.data import DataLoader
 from util.metrics import metric
@@ -12,7 +12,7 @@ import time
 import numpy as np
 from datetime import datetime
 
-DEVICE = torch.device('cuda:0')
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 LOG_FILE = None
 
 
@@ -44,7 +44,8 @@ def get_optimizer(model, OPTIMIZER='Adam'):
 
 def get_model():
     model = our.Ourformer(device=DEVICE, enc_in=ENCODER_IN, dec_in=DECODER_IN, c_out=OUT_SIZE, seq_len=SEQ_LEN,
-                          label_len=LABEL_LEN, out_len=PRED_LEN, d_layers=1, e_layers=2, d_ff=2048).to(
+                          label_len=LABEL_LEN, out_len=PRED_LEN, d_layers=ENC_LAYER - 1, e_layers=ENC_LAYER, n_heads=8,
+                          d_ff=2048).to(
         DEVICE)
     return model
 
@@ -101,15 +102,15 @@ def train(model):
             loss.backward()
             opt.step()
         end_time = datetime.now()
-        print("Epoch: {} cost time: {} s".format(epoch + 1, (end_time - start_time).seconds))
-        print("Epoch: {} cost time: {} s".format(epoch + 1, (end_time - start_time).seconds), file=log_file)
+        # print("Epoch: {} cost time: {} s".format(epoch + 1, (end_time - start_time).seconds))
+        # print("Epoch: {} cost time: {} s".format(epoch + 1, (end_time - start_time).seconds), file=log_file)
         train_loss = np.average(train_loss)
         vali_loss = vali(model, vali_data, vali_loader, loss_func)
         test_loss = vali(model, test_data, test_loader, loss_func)
-        print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-            epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-        print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-            epoch + 1, train_steps, train_loss, vali_loss, test_loss), file=log_file)
+        # print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+        #     epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+        # print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+        #     epoch + 1, train_steps, train_loss, vali_loss, test_loss), file=log_file)
         if vali_loss < min_val_loss:
             wait = 0
             min_val_loss = vali_loss
@@ -117,8 +118,8 @@ def train(model):
         else:
             wait += 1
             if wait == PATIENCE:
-                print('Early stopping at epoch: {}'.format(epoch + 1))
-                print('Early stopping at epoch: {}'.format(epoch + 1), file=log_file)
+                # print('Early stopping at epoch: {}'.format(epoch + 1))
+                # print('Early stopping at epoch: {}'.format(epoch + 1), file=log_file)
                 break
 
     model.load_state_dict(torch.load(model_file_name))
