@@ -103,42 +103,29 @@ class TimeFeatureEmbedding(nn.Module):
 
 
 class ConvEmbedding(nn.Module):
-    def __init__(self, seq_len, device, max_step):
+    def __init__(self, seq_len, c_in, device, kernel_size=3):
         super(ConvEmbedding, self).__init__()
-        self.cov_array = nn.ModuleList()
         self.seq_len = seq_len
-        self.max_step = max_step
-        remain = seq_len
-        now_step = 0
-        while remain > 0:
-            if remain <= 2 ** now_step:
-                self.cov_array.append(nn.Conv1d(in_channels=remain, out_channels=1, kernel_size=1).to(device))
-            else:
-                self.cov_array.append(nn.Conv1d(in_channels=2 ** now_step, out_channels=1, kernel_size=1).to(device))
-            remain -= 2 ** now_step
-            now_step += 1
-            if now_step > max_step:
-                now_step = 0
+        self.device = device
+        self.conv = nn.Conv1d(in_channels=c_in, out_channels=c_in, kernel_size=kernel_size, padding=1, stride=1,
+                              padding_mode='circular').to(device)
+        self.norm = nn.BatchNorm1d(c_in).to(device)
+        self.pool = nn.AvgPool1d(kernel_size=kernel_size)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        now = 0
-        out_x = None
-        y = None
-        for conv in self.cov_array:
-            x_in = x[:, now:now + conv.in_channels, :]
-            now += conv.in_channels
-            y = conv(x_in)
-            if out_x is None:
-                out_x = y
-            else:
-                out_x = torch.cat((out_x, y), dim=1)
-        if out_x.shape[1] % 2 != 0:
-            out_x = torch.cat((out_x, y), dim=1)
-        return out_x
+        x = x.permute(0, 2, 1)
+        x = self.conv(x)
+        x = self.norm(x)
+
+        x = self.pool(x)
+        x = self.relu(x)
+        x = x.permute(0, 2, 1)
+        return x
 
 
 class DataEmbedding(nn.Module):
-    def __init__(self, seq_len, c_in, d_model, device='cpu', embed_type='fixed', freq='h', dropout=0.1, max_step=4):
+    def __init__(self, seq_len, c_in, d_model, device='cpu', embed_type='fixed', freq='h', dropout=0.1, num_layers=2, kernel_size=3):
         super(DataEmbedding, self).__init__()
 
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
@@ -147,13 +134,19 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        # self.conv_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
-        # self.mark_emb = ConvEmbedding(seq_len, device=device, max_step=max_step)
+        self.gru = nn.GRU(input_size=c_in, hidden_size=c_in, num_layers=num_layers, batch_first=True)
+        self.conv_emb = ConvEmbedding(seq_len, c_in, device=device, kernel_size=kernel_size)
+        self.mark_emb = ConvEmbedding(seq_len, d_model, device=device, kernel_size=kernel_size)
+        self.hidden_size = c_in
+        self.num_layers = num_layers
 
     def forward(self, x, x_mark):
-        # x = self.conv_emb(x)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
+        x = self.gru(x, h0.detach())[0]
+
+        x = self.conv_emb(x)
         x_temporal = self.temporal_embedding(x_mark)
-        # x_temporal = self.mark_emb(x_temporal)
+        x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
         return self.dropout(x)
 
@@ -173,14 +166,3 @@ class DataEmbedding_wo_pos(nn.Module):
         x = self.value_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x)
 
-
-class OutputEmbedding(nn.Module):
-    def __int__(self, seq_len, c_in, d_model, device='cpu', embed_type='fixed', freq='h', dropout=0.1, max_step=4):
-        super(OutputEmbedding, self).__init__()
-        self.data_embedding = DataEmbedding(seq_len=seq_len, c_in=c_in, d_model=d_model, device=device, embed_type=embed_type, freq=freq, dropout=dropout, max_step=max_step)
-
-
-    def forward(self, x, x_mark):
-        x = self.data_embedding(x, x_mark)
-
-        return x
