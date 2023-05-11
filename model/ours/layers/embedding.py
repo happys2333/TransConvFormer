@@ -167,9 +167,9 @@ class DataEmbedding(nn.Module):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
         x = self.gru(x, h0.detach())[0]
         # x = self.deepAR(x)
-        x = self.conv_emb(x)
+        # x = self.conv_emb(x)
         x_temporal = self.temporal_embedding(x_mark)
-        x_temporal = self.mark_emb(x_temporal)
+        # x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
         return self.dropout(x)
 
