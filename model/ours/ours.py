@@ -62,7 +62,7 @@ class Ourformer(nn.Module):
                  factor=5, d_model=512, n_heads=8, e_layers=3, d_layers=2, d_ff=512,
                  dropout=0.0, attn='prob', embed='fixed', freq='h', activation='gelu',
                  output_attention=False, distil=True, mix=True,
-                 device=torch.device('cuda:0'), num_layers=2, kernel_size=3):
+                 device=torch.device('cuda:0'), num_layers=2, kernel_size=3, stride=2):
         super(Ourformer, self).__init__()
         self.name = "Ours"
         self.pred_len = out_len
@@ -90,8 +90,10 @@ class Ourformer(nn.Module):
 
         # Encoding
         # obsismc: out_channel->d_model, output dim: (B, seq_len, D)
-        self.enc_embedding = DataEmbedding(seq_len, enc_in, d_model, device, embed, freq, dropout, num_layers, kernel_size=kernel_size)
-        self.dec_embedding = DataEmbedding(label_len+out_len, dec_in, d_model, device, embed, freq, dropout, num_layers, kernel_size=kernel_size)
+        self.enc_embedding = DataEmbedding(seq_len, enc_in, d_model, device, embed, freq, dropout, num_layers,
+                                           kernel_size=kernel_size, stride=stride)
+        self.dec_embedding = DataEmbedding(label_len + out_len, dec_in, d_model, device, embed, freq, dropout,
+                                           num_layers, kernel_size=kernel_size, stride=stride)
         # Attention
         Attn = ProbAttention if attn == 'prob' else FullAttention
         # Encoder
@@ -134,7 +136,8 @@ class Ourformer(nn.Module):
         # self.end_conv1 = nn.Conv1d(in_channels=label_len+out_len, out_channels=out_len, kernel_size=1, bias=True)
         # self.end_conv2 = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=1, bias=True)
         self.projection = nn.Linear(d_model, c_out, bias=True)
-        self.transConv = nn.ConvTranspose1d(in_channels=dec_in, out_channels=dec_in, kernel_size=kernel_size, stride=kernel_size)
+        self.transConv = nn.Upsample(size=self.pred_len+label_len, mode='linear', align_corners=True)
+
 
     def alignment(self, x):
         """
@@ -208,5 +211,6 @@ if __name__ == '__main__':
     model = Ourformer(device=device, enc_in=enc_in, dec_in=dec_in, c_out=c_out, seq_len=seq_len,
                       label_len=label_len, out_len=out_len).to(device)
 
-    summary(model, [(32, seq_len, enc_in), (32, seq_len, enc_in), (32, out_len+label_len, enc_in), (32, out_len+label_len, enc_in)],
+    summary(model, [(32, seq_len, enc_in), (32, seq_len, enc_in), (32, out_len + label_len, enc_in),
+                    (32, out_len + label_len, enc_in)],
             device=device)

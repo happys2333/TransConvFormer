@@ -103,15 +103,14 @@ class TimeFeatureEmbedding(nn.Module):
 
 
 class ConvEmbedding(nn.Module):
-    def __init__(self, seq_len, c_in, device, kernel_size=3):
+    def __init__(self, seq_len, c_in, device, kernel_size=3, stride=2):
         super(ConvEmbedding, self).__init__()
         self.seq_len = seq_len
         self.device = device
         self.conv = nn.Conv1d(in_channels=c_in, out_channels=c_in, kernel_size=kernel_size, padding=1, stride=1,
                               padding_mode='circular').to(device)
         self.norm = nn.BatchNorm1d(c_in).to(device)
-        self.pool = nn.AvgPool1d(kernel_size=kernel_size)
-        self.relu = nn.ReLU()
+        self.pool = nn.AvgPool1d(kernel_size=2, stride=stride)
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
@@ -119,36 +118,35 @@ class ConvEmbedding(nn.Module):
         x = self.norm(x)
 
         x = self.pool(x)
-        x = self.relu(x)
         x = x.permute(0, 2, 1)
         return x
 
 
-class DeepAREmbedding(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size, num_layers, sql_len, pred_len, device):
-        super(DeepAREmbedding, self).__init__()
-        self.name = "DeepAR"
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.device = device
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True).to(device)
-        self.fc = nn.Linear(hidden_size, output_size).to(device)
-        self.outfc = nn.Linear(sql_len, pred_len).to(device)
-
-    def forward(self, x):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
-        out, _ = self.lstm(x, (h0, c0))
-        out = self.fc(out)
-        out = out.permute(0, 2, 1)
-        out = self.outfc(out)
-        out = out.permute(0, 2, 1)
-        return out
+# class DeepAREmbedding(nn.Module):
+#     def __init__(self, input_size, output_size, hidden_size, num_layers, sql_len, pred_len, device):
+#         super(DeepAREmbedding, self).__init__()
+#         self.name = "DeepAR"
+#         self.hidden_size = hidden_size
+#         self.num_layers = num_layers
+#         self.device = device
+#         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True).to(device)
+#         self.fc = nn.Linear(hidden_size, output_size).to(device)
+#         self.outfc = nn.Linear(sql_len, pred_len).to(device)
+#
+#     def forward(self, x):
+#         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+#         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+#         out, _ = self.lstm(x, (h0, c0))
+#         out = self.fc(out)
+#         out = out.permute(0, 2, 1)
+#         out = self.outfc(out)
+#         out = out.permute(0, 2, 1)
+#         return out
 
 
 class DataEmbedding(nn.Module):
     def __init__(self, seq_len, c_in, d_model, device='cpu', embed_type='fixed', freq='h', dropout=0.1, num_layers=2,
-                 kernel_size=3):
+                 kernel_size=3, stride=2):
         super(DataEmbedding, self).__init__()
 
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
@@ -157,18 +155,18 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        # self.gru = nn.GRU(input_size=c_in, hidden_size=c_in, num_layers=num_layers, batch_first=True)
-        self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
-                            num_layers=num_layers, device=device)
-        self.conv_emb = ConvEmbedding(seq_len, c_in, device=device, kernel_size=kernel_size)
-        self.mark_emb = ConvEmbedding(seq_len, d_model, device=device, kernel_size=kernel_size)
+        self.gru = nn.GRU(input_size=c_in, hidden_size=c_in, num_layers=num_layers, batch_first=True)
+        # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
+        #                     num_layers=num_layers, device=device)
+        self.conv_emb = ConvEmbedding(seq_len, c_in, device=device, kernel_size=kernel_size, stride=stride)
+        self.mark_emb = ConvEmbedding(seq_len, d_model, device=device, kernel_size=kernel_size, stride=stride)
         self.hidden_size = c_in
         self.num_layers = num_layers
 
     def forward(self, x, x_mark):
-        # h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
-        # x = self.gru(x, h0.detach())[0]
-        x = self.deepAR(x)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
+        x = self.gru(x, h0.detach())[0]
+        # x = self.deepAR(x)
         x = self.conv_emb(x)
         x_temporal = self.temporal_embedding(x_mark)
         x_temporal = self.mark_emb(x_temporal)
