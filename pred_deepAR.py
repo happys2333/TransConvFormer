@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from model.deepAR import DeepAR
 from util.param import LEARN, BATCH_SIZE, PATIENCE, EPOCH, SEQ_LEN, LABEL_LEN, PRED_LEN, ENCODER_IN, DECODER_IN, \
-     OUT_SIZE, OUTPUT_MODEL_PATH,FEATURES,DATASET,data_parser
+    OUT_SIZE, OUTPUT_MODEL_PATH, FEATURES, DATASET, data_parser
 from data_process.dataset_process import Process_Dataset
 from torch.utils.data import DataLoader
 from util.metrics import metric
@@ -19,8 +19,9 @@ LOG_FILE = None
 
 def get_data(flag='train', dataset='ETTh1'):
     process = Process_Dataset(dataset=dataset, seq_len=SEQ_LEN,
-                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES, target=data_parser[dataset]['T'], cols=None, freq='h',
-                              timeenc=0, inverse=False, batch_size=BATCH_SIZE,)
+                              label_len=LABEL_LEN, pred_len=PRED_LEN, features=FEATURES,
+                              target=data_parser[dataset]['T'], cols=None, freq='h',
+                              timeenc=0, inverse=False, batch_size=BATCH_SIZE, )
     return process.get_data(flag)
 
 
@@ -43,7 +44,8 @@ def get_optimizer(model, OPTIMIZER='Adam'):
 
 
 def get_model():
-    model = DeepAR(sql_len=SEQ_LEN,pred_len=PRED_LEN,input_size=ENCODER_IN,output_size=DECODER_IN,hidden_size=2,num_layers=2,device=DEVICE)
+    model = DeepAR(sql_len=SEQ_LEN, pred_len=PRED_LEN, input_size=ENCODER_IN, output_size=DECODER_IN, hidden_size=2,
+                   num_layers=2, device=DEVICE)
     return model
 
 
@@ -64,15 +66,15 @@ def train(model):
     train_data, train_loader = get_data(flag='train', dataset=DATASET)
     vali_data, vali_loader = get_data(flag='val', dataset=DATASET)
     test_data, test_loader = get_data(flag='test', dataset=DATASET)
-    save_path = OUTPUT_MODEL_PATH+"/"+model.name
+    save_path = OUTPUT_MODEL_PATH + "/" + model.name
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     time_now = datetime.now().strftime("%Y_%m_%d_%H,%M,%S")
-    log_file_name = save_path+"/"+ model.name + "_" + time_now + "_log.txt"
+    log_file_name = save_path + "/" + model.name + "_" + time_now + "_log.txt"
     log_file = open(log_file_name, "w")
     global LOG_FILE
     LOG_FILE = log_file
-    model_file_name = save_path+"/"+ model.name + "_" + time_now + ".pt"
+    model_file_name = save_path + "/" + model.name + "_" + time_now + ".pt"
 
     train_steps = len(train_loader)
     print('Model Training Started ...', time_now)
@@ -83,7 +85,7 @@ def train(model):
     loss_func = get_loss_fun("MSE")
     criterion_func = get_loss_fun("MSE")
     print("loss function is MSE")
-    print("loss function is MSE",file=log_file)
+    print("loss function is MSE", file=log_file)
     opt = get_optimizer(model)
     for epoch in range(EPOCH):
         start_time = datetime.now()
@@ -127,10 +129,9 @@ def train(model):
 
 
 def test(model):
-
     test_data, test_loader = get_data(flag='test', dataset=DATASET)
-    print("Model Testing Started ...",datetime.now().strftime("%Y_%m_%d_%H,%M,%S"))
-    print("Model Testing Started ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"),file=LOG_FILE)
+    print("Model Testing Started ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"))
+    print("Model Testing Started ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"), file=LOG_FILE)
     model.eval()
 
     preds = []
@@ -148,21 +149,20 @@ def test(model):
     preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
     trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
     print('test shape:', preds.shape, trues.shape)
-    save_path = OUTPUT_MODEL_PATH+"/"+ model.name
-    save_path = save_path+"/"+ "test_result"
-
+    save_path = OUTPUT_MODEL_PATH + "/" + model.name
+    save_path = save_path + "/" + "test_result"
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     # result save
     mae, mse, rmse, mape, mspe = metric(preds, trues)
-    print('mse:{}, mae:{}, rmse:{}, mape:{}'.format(mse, mae,rmse,mape))
-    print('mse:{}, mae:{}, rmse:{}, mape:{}'.format(mse, mae, rmse, mape),file=LOG_FILE)
+    print('mse:{}, mae:{}, rmse:{}, mape:{}'.format(mse, mae, rmse, mape))
+    print('mse:{}, mae:{}, rmse:{}, mape:{}'.format(mse, mae, rmse, mape), file=LOG_FILE)
     np.save(save_path + '/metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
     np.save(save_path + '/pred.npy', preds)
     np.save(save_path + '/true.npy', trues)
     print("Model Testing Ended ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"))
-    print("Model Testing Ended ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"),file=LOG_FILE)
+    print("Model Testing Ended ...", datetime.now().strftime("%Y_%m_%d_%H,%M,%S"), file=LOG_FILE)
     return
 
 
@@ -178,8 +178,8 @@ def predict(model):
 
     preds = np.array(preds)
     preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-    save_path = OUTPUT_MODEL_PATH+"/"+ model.name
-    save_path = save_path+"/"+ "pred_result"
+    save_path = OUTPUT_MODEL_PATH + "/" + model.name
+    save_path = save_path + "/" + "pred_result"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     # result save
@@ -209,4 +209,3 @@ if __name__ == '__main__':
     test(best_model)
 
     torch.cuda.empty_cache()
-

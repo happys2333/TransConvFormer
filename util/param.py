@@ -18,7 +18,7 @@ BATCH_SIZE = 32
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seq_len', type=int, default=96, help='sequence length')
-parser.add_argument('--enc_layers', type=int, default=1, help='encoder layers number')
+parser.add_argument('--enc_layers', type=int, default=3, help='encoder layers number')
 parser.add_argument('--label_len', type=int, default=48, help='label length')
 parser.add_argument('--pred_len', type=int, default=120, help='prediction length')
 parser.add_argument('--features', type=str, default='M', help='features')
