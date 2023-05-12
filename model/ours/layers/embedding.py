@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 import math
+from attention import Residual
 
 
 class PositionalEmbedding(nn.Module):
@@ -128,7 +129,8 @@ class LSTMEmbedding(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.fc = Residual(hidden_size, output_size)
+
         self.device = device
 
     def forward(self, x):
@@ -174,7 +176,7 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = LSTMEmbedding(input_size=d_model, hidden_size=d_model//2, num_layers=num_layers, output_size=d_model,
+        self.rnn = LSTMEmbedding(input_size=seq_len, hidden_size=seq_len, num_layers=num_layers, output_size=seq_len,
                                  device=device)
         # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
         #                     num_layers=num_layers, device=device)
@@ -185,10 +187,11 @@ class DataEmbedding(nn.Module):
     def forward(self, x, x_mark):
         # x = self.deepAR(x)
         # x = self.conv_emb(x)
+        x = self.rnn(x)
         x_temporal = self.temporal_embedding(x_mark)
         # x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
-        x = self.rnn(x)
+
         return self.dropout(x)
 
 
