@@ -170,7 +170,8 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = LSTMEmbedding(input_size=c_in, hidden_size=c_in, num_layers=num_layers, output_size=c_in, device=device)
+        # self.rnn = LSTMEmbedding(input_size=c_in, hidden_size=c_in, num_layers=num_layers, output_size=c_in, device=device)
+        self.rnn = nn.GRU(input_size=c_in, hidden_size=c_in, num_layers=num_layers, batch_first=True)
         # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
         #                     num_layers=num_layers, device=device)
         # self.fc = Residual(c_in, c_in)
@@ -180,7 +181,9 @@ class DataEmbedding(nn.Module):
     def forward(self, x, x_mark):
         # x = self.deepAR(x)
         # x = self.conv_emb(x)
-        x = self.rnn(x)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
+        x = self.rnn(x, h0.detach())[0]
+
         x_temporal = self.temporal_embedding(x_mark)
         # x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
