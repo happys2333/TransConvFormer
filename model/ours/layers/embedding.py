@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 import math
-from attention import Residual
+from .attention import Residual
 
 
 class PositionalEmbedding(nn.Module):
