@@ -122,6 +122,25 @@ class ConvEmbedding(nn.Module):
         return x
 
 
+class LSTMEmbedding(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size, device):
+        super(LSTMEmbedding, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+        self.device = device
+
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+        out, _ = self.lstm(x, (h0, c0))
+
+        # 将 LSTM 的输出结果通过全连接层输出
+        out = self.fc(out)
+        return out
+
+
 # class DeepAREmbedding(nn.Module):
 #     def __init__(self, input_size, output_size, hidden_size, num_layers, sql_len, pred_len, device):
 #         super(DeepAREmbedding, self).__init__()
@@ -155,22 +174,21 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.gru = nn.GRU(input_size=c_in, hidden_size=c_in, num_layers=num_layers, batch_first=True)
+        self.rnn = LSTMEmbedding(input_size=d_model, hidden_size=d_model//2, num_layers=num_layers, output_size=d_model,
+                                 device=device)
         # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
         #                     num_layers=num_layers, device=device)
-        self.conv_emb = ConvEmbedding(seq_len, c_in, device=device, kernel_size=kernel_size, stride=stride)
-        self.mark_emb = ConvEmbedding(seq_len, d_model, device=device, kernel_size=kernel_size, stride=stride)
+
         self.hidden_size = c_in
         self.num_layers = num_layers
 
     def forward(self, x, x_mark):
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
-        x = self.gru(x, h0.detach())[0]
         # x = self.deepAR(x)
         # x = self.conv_emb(x)
         x_temporal = self.temporal_embedding(x_mark)
         # x_temporal = self.mark_emb(x_temporal)
         x = self.value_embedding(x) + x_temporal + self.position_embedding(x)
+        x = self.rnn(x)
         return self.dropout(x)
 
 
