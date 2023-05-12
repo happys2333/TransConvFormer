@@ -128,7 +128,7 @@ class LSTMEmbedding(nn.Module):
         super(LSTMEmbedding, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = Residual(hidden_size, output_size)
 
         self.device = device
