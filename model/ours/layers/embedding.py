@@ -128,7 +128,7 @@ class LSTMEmbedding(nn.Module):
         super(LSTMEmbedding, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
         self.fc = Residual(hidden_size, output_size)
 
         self.device = device
@@ -176,7 +176,7 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = LSTMEmbedding(input_size=seq_len, hidden_size=seq_len, num_layers=num_layers, output_size=seq_len,
+        self.rnn = LSTMEmbedding(input_size=c_in, hidden_size=c_in, num_layers=num_layers, output_size=c_in,
                                  device=device)
         # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
         #                     num_layers=num_layers, device=device)
