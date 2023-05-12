@@ -14,7 +14,7 @@ def path_parse(target_path):
 EPOCH = 200
 
 LEARN = 0.0001
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--seq_len', type=int, default=96, help='sequence length')
