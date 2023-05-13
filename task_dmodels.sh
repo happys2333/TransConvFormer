@@ -10,9 +10,9 @@
 
 # Define variables
 env_name="trans"
-seq_lens=(96 192 336 720)
+seq_lens=(96)
 label_lens=(48)
-pred_lens=(96)
+pred_lens=(96 192)
 features=("M" "S")
 python_scripts=("pred_ours.py")
 data_sets=("ETTh1" "ETTh2" "ETTm1" "ETTm2" "WTH" "ECL")
@@ -23,7 +23,7 @@ d_models=(64 128 256 512 1024)
 
 source activate $env_name
 
-for task in "${seq_lens[@]}"
+for task in "${d_models[@]}"
 do
   for feature in "${features[@]}"
 do
@@ -35,12 +35,12 @@ do
             for python_script in "${python_scripts[@]}"
             do
                 # Print prompt message with script name and parameters, and write it to output file
-                prompt_message=("Processing script '$python_script' with parameters: seq_len=$task, pred_len=$pred_len, features=$feature, dataset=$data_set")
+                prompt_message=("Processing script '$python_script' with parameters: d_models=$task, pred_len=$pred_len, features=$feature, dataset=$data_set")
 
                 echo "${prompt_message[@]}"
 
                 # Run current Python script with specified parameters and append output to file
-                python $python_script --seq_len $task --pred_len $pred_len --features $feature --dataset $data_set
+                python $python_script --d_model $task --pred_len $pred_len --features $feature --dataset $data_set
             done
         done
     done
