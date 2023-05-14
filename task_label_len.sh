@@ -10,7 +10,7 @@
 
 # Define variables
 env_name="trans"
-seq_lens=(336)
+seq_lens=(720)
 label_lens=(24 48 96 192)
 pred_lens=(336)
 features=("M" "S")
