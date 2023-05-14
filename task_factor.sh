@@ -18,7 +18,7 @@ python_scripts=("pred_ours.py")
 data_sets=("ETTh1" "ETTh2" "ETTm1" "ETTm2" "WTH" "ECL")
 enc_layers=(3)
 n_heads=(8 9 10)
-factor=(3 4 5 6 7)
+factor=(3 5 8 10)
 d_models=(64 128 256 512 1024)
 
 source activate $env_name
