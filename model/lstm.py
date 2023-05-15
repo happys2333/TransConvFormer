@@ -4,14 +4,14 @@ import torch
 
 # 定义LSTM模型
 class LSTMModel(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size, pred_len):
+    def __init__(self, input_size, hidden_size, num_layers, output_size, pred_len, device):
         super(LSTMModel, self).__init__()
         self.name = "LSTM"
         self.pred_len = pred_len
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True).to(device)
+        self.fc = nn.Linear(hidden_size, output_size).to(device)
 
     def forward(self, x):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)

@@ -3,9 +3,9 @@
 $env_name = "DL-Project-2022"
 $seq_len = 96
 $label_len = 48
-$pred_lens = @(96, 192, 336, 720)
+$pred_lens = @(12, 24, 48, 96)
 $features = @('M', 'S')
-$python_scripts = @('pred_ours.py')
+$python_scripts = @('pred_lstm.py')
 $data_sets = @('ETTh1','ETTh2','ETTm1','ETTm2','WTH','ECL')
 
 cd F:\TransConvFormer
