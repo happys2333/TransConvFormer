@@ -3,7 +3,7 @@ import torch.nn as nn
 import model.ours.ours as our
 from torch import optim
 from util.param import LEARN, BATCH_SIZE, PATIENCE, EPOCH, SEQ_LEN, LABEL_LEN, PRED_LEN, ENCODER_IN, DECODER_IN, \
-    OUT_SIZE, OUTPUT_MODEL_PATH, FEATURES, DATASET, data_parser, ENC_LAYER, FACTORS, D_MODEL, N_HEADS
+    OUT_SIZE, OUTPUT_MODEL_PATH, FEATURES, DATASET, data_parser, ENC_LAYER, FACTORS, D_MODEL, N_HEADS, NUM_LAYERS
 from data_process.dataset_process import Process_Dataset
 from torch.utils.data import DataLoader
 from util.metrics import metric
@@ -45,7 +45,7 @@ def get_optimizer(model, OPTIMIZER='Adam'):
 def get_model():
     model = our.Ourformer(device=DEVICE, enc_in=ENCODER_IN, dec_in=DECODER_IN, c_out=OUT_SIZE, seq_len=SEQ_LEN,
                           label_len=LABEL_LEN, out_len=PRED_LEN, d_layers=ENC_LAYER - 1, e_layers=ENC_LAYER, n_heads=N_HEADS,
-                          factor=FACTORS, d_ff=2048, d_model=D_MODEL).to(
+                          factor=FACTORS, d_ff=2048, d_model=D_MODEL, num_layers=NUM_LAYERS).to(
         DEVICE)
     return model
 

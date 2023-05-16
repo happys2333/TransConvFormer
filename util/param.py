@@ -22,6 +22,7 @@ parser.add_argument('--factor', type=int, default=5, help='factor')
 parser.add_argument('--d_model', type=int, default=512, help='d_model')
 parser.add_argument('--n_heads', type=int, default=8, help='n_heads')
 parser.add_argument('--enc_layers', type=int, default=3, help='encoder layers number')
+parser.add_argument('--num_layers', type=int, default=2, help='embedding layers number')
 parser.add_argument('--label_len', type=int, default=48, help='label length')
 parser.add_argument('--pred_len', type=int, default=120, help='prediction length')
 parser.add_argument('--features', type=str, default='M', help='features')
@@ -36,6 +37,7 @@ DATASET = args.dataset
 FACTORS = args.factor
 D_MODEL = args.d_model
 N_HEADS = args.n_heads
+NUM_LAYERS = args.num_layers
 
 FEATURES = args.features
 
