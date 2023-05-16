@@ -24,7 +24,7 @@ num_layers=(1 2 3 4 5 6 7 8 9 10)
 
 source activate $env_name
 
-for task in "${label_lens[@]}"
+for task in "${num_layers[@]}"
 do
   for feature in "${features[@]}"
 do
@@ -36,12 +36,12 @@ do
             for python_script in "${python_scripts[@]}"
             do
                 # Print prompt message with script name and parameters, and write it to output file
-                prompt_message=("Processing script '$python_script' with parameters: label_len=$task, pred_len=$pred_len, features=$feature, dataset=$data_set")
+                prompt_message=("Processing script '$python_script' with parameters: num_layers=$task, pred_len=$pred_len, features=$feature, dataset=$data_set")
 
                 echo "${prompt_message[@]}"
 
                 # Run current Python script with specified parameters and append output to file
-                python $python_script --label_len $task --pred_len $pred_len --features $feature --dataset $data_set
+                python $python_script --num_layers $task --pred_len $pred_len --features $feature --dataset $data_set
             done
         done
     done
