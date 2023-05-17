@@ -15,8 +15,8 @@ label_len=48
 pred_lens=(96 192 336 720)
 features=("M" "S")
 python_scripts=("pred_ours.py")
-data_sets=("ETTh1" "ETTh2" "ETTm1" "ETTm2" "WTH" "ECL")
-enc_layers=(1 2)
+data_sets=("ETTm2" "WTH" "ECL")
+enc_layers=(2)
 
 source activate $env_name
 
