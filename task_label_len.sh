@@ -12,10 +12,10 @@
 env_name="trans"
 seq_lens=(720)
 label_lens=(24 48 96 192)
-pred_lens=(336)
+pred_lens=(96)
 features=("M" "S")
 python_scripts=("pred_ours.py")
-data_sets=("ETTh1" "ETTh2" "ETTm1" "ETTm2" "WTH" "ECL")
+data_sets=("ETTh1" "WTH" "ECL")
 enc_layers=(3)
 n_heads=(8 9 10)
 factor=(4 5 6)
