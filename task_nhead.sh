@@ -10,14 +10,14 @@
 
 # Define variables
 env_name="trans"
-seq_lens=(96)
+seq_lens=(192)
 label_lens=(48)
-pred_lens=(96 192)
+pred_lens=(192)
 features=("M" "S")
 python_scripts=("pred_ours.py")
-data_sets=("ETTh1" "ETTh2" "ETTm1" "ETTm2" "WTH" "ECL")
+data_sets=("ETTh1" "WTH" "ECL")
 enc_layers=(3)
-n_heads=(6 7 8 9 10)
+n_heads=(3 6 7 8 12 14 16 32)
 factor=(4 5 6)
 d_models=(64 128 256 512 1024)
 
