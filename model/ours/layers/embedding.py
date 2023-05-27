@@ -137,6 +137,25 @@ class LSTMEmbedding(nn.Module):
         return out
 
 
+class ARMAEmbedding(nn.Module):
+    def __init__(self, in_features, out_features, device):
+        super(ARMAEmbedding, self).__init__()
+        self.ar = nn.Sequential(
+            nn.Linear(in_features=in_features, out_features=out_features),
+            nn.ReLU()
+        ).to(device)
+        self.ma = nn.Sequential(
+            nn.Linear(in_features=in_features, out_features=out_features),
+            nn.ReLU()
+        ).to(device)
+
+    def forward(self, x):
+        ar = self.ar(x)
+        ma = self.ma(x)
+        output = ar + ma
+        return output
+
+
 # class DeepAREmbedding(nn.Module):
 #     def __init__(self, input_size, output_size, hidden_size, num_layers, sql_len, pred_len, device):
 #         super(DeepAREmbedding, self).__init__()
@@ -171,9 +190,10 @@ class DataEmbedding(nn.Module):
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
         # self.rnn = LSTMEmbedding(input_size=c_in, hidden_size=c_in, num_layers=num_layers, output_size=c_in, device=device)
-        self.rnn = nn.GRU(input_size=c_in, hidden_size=d_model, num_layers=num_layers, batch_first=True)
+        # self.rnn = nn.GRU(input_size=c_in, hidden_size=d_model, num_layers=num_layers, batch_first=True)
         # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
         #                     num_layers=num_layers, device=device)
+        self.arma = ARMAEmbedding(in_features=c_in, out_features=d_model, device=device)
         # self.fc = Residual(c_in, c_in)
         self.hidden_size = d_model
         self.num_layers = num_layers
@@ -181,9 +201,9 @@ class DataEmbedding(nn.Module):
     def forward(self, x, x_mark):
         # x = self.deepAR(x)
         # x = self.conv_emb(x)
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
-        x = self.rnn(x, h0.detach())[0]
-
+        # h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
+        # x = self.rnn(x, h0.detach())[0]
+        x = self.arma(x)
         x_temporal = self.temporal_embedding(x_mark)
         # x_temporal = self.mark_emb(x_temporal)
         x = x + x_temporal
