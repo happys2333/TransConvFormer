@@ -157,27 +157,40 @@ class ARMAEmbedding(nn.Module):
         output = ar + ma
         return output
 
+class TPA(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_heads):
+        super(TPA, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_heads = num_heads
+        self.encoder = nn.Linear(input_size, hidden_size)
+        self.query = nn.Linear(hidden_size, hidden_size)
+        self.key = nn.Linear(hidden_size, hidden_size)
+        self.value = nn.Linear(hidden_size, hidden_size)
+        self.fc = nn.Linear(hidden_size, output_size)
 
-# class DeepAREmbedding(nn.Module):
-#     def __init__(self, input_size, output_size, hidden_size, num_layers, sql_len, pred_len, device):
-#         super(DeepAREmbedding, self).__init__()
-#         self.name = "DeepAR"
-#         self.hidden_size = hidden_size
-#         self.num_layers = num_layers
-#         self.device = device
-#         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True).to(device)
-#         self.fc = nn.Linear(hidden_size, output_size).to(device)
-#         self.outfc = nn.Linear(sql_len, pred_len).to(device)
-#
-#     def forward(self, x):
-#         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
-#         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
-#         out, _ = self.lstm(x, (h0, c0))
-#         out = self.fc(out)
-#         out = out.permute(0, 2, 1)
-#         out = self.outfc(out)
-#         out = out.permute(0, 2, 1)
-#         return out
+    def forward(self, x):
+        # Encoder
+        encoded = self.encoder(x)
+        batch_size, seq_len, channel = encoded.size()
+
+        # Query, Key, Value
+        q = self.query(encoded)
+        k = self.key(encoded)
+        v = self.value(encoded)
+
+        # Attention
+        q = q.view(-1, self.num_heads, self.hidden_size // self.num_heads)
+        k = k.view(-1, self.num_heads, self.hidden_size // self.num_heads)
+        v = v.view(-1, self.num_heads, self.hidden_size // self.num_heads)
+        attn_weights = torch.bmm(q, k.transpose(1, 2)) / (self.hidden_size // self.num_heads) ** 0.5
+        attn_weights = F.softmax(attn_weights, dim=-1)
+        attn_output = torch.bmm(attn_weights, v).view(-1, self.hidden_size)
+        attn_output = attn_output.view(batch_size, seq_len,  channel)
+        # Output
+        out = self.fc(attn_output)
+        return out
+
 
 
 class DataEmbedding(nn.Module):
@@ -191,21 +204,20 @@ class DataEmbedding(nn.Module):
                                                     freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = LSTMEmbedding(input_size=c_in, num_layers=num_layers, output_size=d_model, device=device)
+        self.time = TPA(input_size=c_in, hidden_size=c_in*2, output_size=d_model, num_heads=4)
+        # self.rnn = LSTMEmbedding(input_size=c_in, num_layers=num_layers, output_size=d_model, device=device)
         # self.rnn = nn.GRU(input_size=c_in, hidden_size=d_model, num_layers=num_layers, batch_first=True)
-        # self.deepAR = DeepAREmbedding(sql_len=seq_len, pred_len=seq_len, input_size=c_in, output_size=c_in, hidden_size=2,
-        #                     num_layers=num_layers, device=device)
         # self.arma = ARMAEmbedding(in_features=c_in, out_features=d_model, device=device)
         # self.fc = Residual(c_in, c_in)
         self.hidden_size = d_model
         self.num_layers = num_layers
 
     def forward(self, x, x_mark):
-        # x = self.deepAR(x)
+        x = self.time(x)
         # x = self.conv_emb(x)
         # h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).requires_grad_().to(x.device)
         # x = self.rnn(x, h0.detach())[0]
-        x = self.rnn(x)
+        # x = self.rnn(x)
         # x = self.arma(x)
         x_temporal = self.temporal_embedding(x_mark)
         # x_temporal = self.mark_emb(x_temporal)
